@@ -27,4 +27,5 @@
     <string name="tmb_response">Tmb: %1$.2f</string>
     <string name="delete_message">Você realmente quer excluir o registro?</string>
     <string name="cancel">Cancelar</string>
+    <string name="list_response">resultado: %1$.2f, data: %2$s</string>
 </resources>

@@ -2,6 +2,7 @@ package com.example.fitnesstracker
 
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.inputmethod.InputMethodManager
@@ -10,6 +11,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.fitnesstracker.R.*
+import com.example.fitnesstracker.model.Calc
 
 class ImcActivity : AppCompatActivity() {
 
@@ -58,14 +60,33 @@ class ImcActivity : AppCompatActivity() {
                 android.R.string.ok,
                 DialogInterface.OnClickListener() { dialog, _ ->
                     dialog.dismiss()
-                }
-            )
+                })
+            .setNegativeButton(
+                string.save,
+                DialogInterface.OnClickListener() { _, _ ->
+                    saveCalc(imc)
+                })
             .create()
             .show()
 
         (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).apply {
             hideSoftInputFromWindow(currentFocus?.windowToken, 0)
         }
+    }
+
+    private fun saveCalc(imc: Double) {
+        Thread(Runnable {
+            (application as App).db.calcDao().apply {
+                insert(Calc(type = "IMC", res = imc))
+
+                runOnUiThread {
+                    Intent(this@ImcActivity, ListCalcActivity::class.java).apply {
+                        putExtra("type", "IMC")
+                        startActivity(this)
+                    }
+                }
+            }
+        }).start()
     }
 
     private fun validateFields(): Boolean {
