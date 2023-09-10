@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 2 -> {
+                    startActivity(Intent(this@MainActivity, TmbActivity::class.java))
                 }
             }
         }

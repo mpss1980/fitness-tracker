@@ -5,6 +5,8 @@ import android.content.DialogInterface
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
@@ -41,6 +43,19 @@ class ImcActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == id.menu_search) {
+            finish()
+            openListActivity()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun imcResponse(imc: Double) {
         val result = when {
             imc < 15.0 -> string.imc_severely_low_weight
@@ -64,6 +79,11 @@ class ImcActivity : AppCompatActivity() {
             .setNegativeButton(
                 string.save,
                 DialogInterface.OnClickListener() { _, _ ->
+                    intent.extras?.getInt("updateId")?.let {
+                        (application as App).db.calcDao().apply {
+                            return@OnClickListener updateCalc(it, imc)
+                        }
+                    }
                     saveCalc(imc)
                 })
             .create()
@@ -74,19 +94,37 @@ class ImcActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateCalc(id: Int, imc: Double) {
+        Thread(Runnable {
+            (application as App).db.calcDao().apply {
+                update(Calc(id = id, type = "IMC", res = imc))
+
+                runOnUiThread {
+                    finish()
+                    openListActivity()
+                }
+            }
+        }).start()
+    }
+
     private fun saveCalc(imc: Double) {
         Thread(Runnable {
             (application as App).db.calcDao().apply {
                 insert(Calc(type = "IMC", res = imc))
 
                 runOnUiThread {
-                    Intent(this@ImcActivity, ListCalcActivity::class.java).apply {
-                        putExtra("type", "IMC")
-                        startActivity(this)
-                    }
+                    finish()
+                    openListActivity()
                 }
             }
         }).start()
+    }
+
+    private fun openListActivity() {
+        Intent(this, ListCalcActivity::class.java).apply {
+            putExtra("type", "IMC")
+            startActivity(this)
+        }
     }
 
     private fun validateFields(): Boolean {
